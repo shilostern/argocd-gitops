@@ -4,17 +4,22 @@ kind: Kustomization
 # Inherit baseline resources
 resources:
   - ../../base
-  - ../../components/environment-variables
 
-# Dev-specific overrides and environment variables
-patches:
-  - target:
-      kind: Deployment
+# Dev-specific overrides using Strategic Merge Patch
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
       name: whoami
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/env/0/value
-        value: "development"
+    spec:
+      template:
+        spec:
+          containers:
+            - name: whoami
+              env:
+                - name: ENV_NAME  # שנה לשם המשתנה המדויק שהאפליקציה שלך מצפה לו
+                  value: "development"
 
 # Scaled down replica count for development environment stability
 replicas:
