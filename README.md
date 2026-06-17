@@ -96,7 +96,7 @@
 ---
 
 ## 9. שיפורים עתידיים
-                                                                                                                                                                                  Auto-Scaling: הוספת HPA להתאמת מספר הפודים לעומס                                                                                                                                                                    CI/CD Pipeline: שילוב תהליך אוטומטי לבניית אימג'ים (GitHub Actions)
+  תלות ב-Podman Machine המקומית
 
 ---
 
