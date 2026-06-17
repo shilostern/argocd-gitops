@@ -59,10 +59,10 @@
 ## 9. שיפורים עתידיים                                                                                                                                                                                                           * **Auto-Scaling:** הוספת HPA כדי שהמערכת תתאים את מספר הפודים לעומס בזמן אמת.                                                                                                                                                     * **CI/CD Pipeline:** שילוב תהליך אוטומטי שבונה אימג'ים (GitHub Actions) ומעדכן את ה-Repo אוטומטית.
 
 ## 10. סביבת Production
-בסביבת Prod הייתי משנה:                                                                                                                                                                                                          * **Registry חיצוני:** שימוש ב-Private Container Registry מאובטח.
-* **ניטור (Monitoring):** הוספת Prometheus ו-Grafana לניטור תקינות הפודים.
+בסביבת Prod הייתי משנה:                                                                                                                                                                                                          **Registry חיצוני:** שימוש ב-Private Container Registry מאובטח.
+**ניטור (Monitoring):** הוספת Prometheus ו-Grafana לניטור תקינות הפודים.
 
-## 11. סיכונים בפתרון הנוכחי                                                                                                                                                                                                      * **Single Point of Failure:** תלות ב-Podman Machine המקומית; קריסתה משביתה את הקלאסטר.
-* **חוסר אבטחה:** ניהול האימג'ים באופן ידני ללא סריקת פגיעות.
+## 11. סיכונים בפתרון הנוכחי                                                                                                                                                                                                      **Single Point of Failure:** תלות ב-Podman Machine המקומית; קריסתה משביתה את הקלאסטר.
+**חוסר אבטחה:** ניהול האימג'ים באופן ידני ללא סריקת פגיעות.
 
 </div>
