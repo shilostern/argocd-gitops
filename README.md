@@ -109,7 +109,8 @@
 ---
 
 ## 11. סיכונים בפתרון הנוכחי
-                                                                                                                                                                                                **Single Point of Failure**  
+                                                                                                                                                                                                
+**ח Single Point of Failure**  
   תלות ב-Podman Machine המקומית
 
 **חוסר אבטחה**  
