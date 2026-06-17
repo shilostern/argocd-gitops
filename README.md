@@ -38,11 +38,11 @@
 במהלך הקמת סביבת ה-GitOps ופריסת האפליקציה whoami באמצעות ArgoCD, נתקלתי במספר אתגרים משמעותיים הקשורים לרשת, ניהול Images ותאימות בין Podman, Kind ו-Kubernetes.
 
 **1. בעיות רשת ומשיכת Images**
-* האתגר: לאחר הסנכרון הראשוני ב-ArgoCD, ה-Pods נכנסו למצבי `ImagePullBackOff` ו-`ErrImagePull`. בדיקה הראתה כי ה-Container Runtime לא הצליח לגשת ל-Docker Hub עקב בעיות קישוריות.
-* הפתרון: מכיוון שה-Cluster מנותק לחלוטין, עברתי לתהליך עבודה Offline המבוסס על טעינת Images ידנית.
+* האתגר: לאחר הסנכרון הראשוני ב-ArgoCD, ה-Pods נכנסו למצבי `ImagePullBackOff` ו-`ErrImagePull`.
+* הפתרון: מכיוון שה-Cluster מנותק לחלוטין מגישה חיצונית, עברתי לתהליך עבודה Offline המבוסס על טעינת Images ידנית.
 
 **2. מגבלות kind load בסביבת Podman**
-* האתגר: נתקלתי בבעיות תאימות בין Kind לבין Podman בשימוש ב-`kind load docker-image`.
+* האתגר: נתקלתי בבעיות תאימות בשימוש ב-`kind load docker-image`.
 * הפתרון: עבודה ישירה מול ה-Container Runtime של Kubernetes.
 
 **3. קפיאת Podman Machine וניתוק ה-API Server**
