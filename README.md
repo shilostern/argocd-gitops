@@ -28,10 +28,11 @@
 * **הפתרון:** בוצע אילוץ הנעה מחדש (Forced Start) ברמת הקונטיינר של ה-Control Plane באמצעות פודמן (`podman start gitops-cluster-control-plane`), מה ששיחרר את ה-API Server, ופתח מחדש את הצינור לארגו-CD (`kubectl port-forward`).
 
 ### 4. הזרקה ידנית עמוקה (Low-Level Containerd Import) ותיאום שמות (Naming Realignment)
-* **האתגר המכריע והפתרון הסופי:** כדי לפתור את בעיית האינטרנט לצמיתות, ביצענו ייצוא פיזי של ה-Image לקובץ ארכיון במחשב המארח:
-  ```powershell
-  podman save -o whoami-latest.tar traefik/whoami:latest
+* **האתגר המכריע והפתרון הסופי:** כדי לפתור את בעיית האינטרנט לצמיתות, ביצענו ייצוא פיזי של ה-Image לקובץ ארכיון במחשב המארח.
 
+תחילה שמרנו את האימג' לקובץ tar:
+```powershell
+podman save -o whoami-latest.tar traefik/whoami:latest
 לאחר מכן העתקנו את הקובץ ישירות לתוך קונטיינר ה-Control Plane:
 
 PowerShell
@@ -47,3 +48,29 @@ podman exec gitops-cluster-control-plane ctr --namespace k8s.io images import /w
 YAML
 image: localhost/traefik/whoami:latest
 ברגע שהשינוי נדחף, ArgoCD זיהה את הקומיט, עדכן את ה-ReplicaSet, וקובנרטיס משך את האימג' לוקאלית בשבריר שנייה והביא את האפליקציה למצב Healthy & Running.
+
+💡 תובנות מפתח (Key Takeaways)
+עבודה בסביבת פודמן ווינדוס: דורשת לעיתים קרובות פתרונות מותאמים (כמו שימוש ב-ctr) מכיוון שכלי ה-Automated Loading של קלאסטרים מקומיים מותאמים בבסיסם ל-Docker Daemon הסטנדרטי.
+
+עוצמת ה-GitOps (ארגו-CD): למרות כל הצרות והריסטארטים ברמת התשתית והמחשב, ברגע שהתשתית חזרה לעצמה והצהרנו על ה-Image הנכון ב-Git, המערכת תיקנה את עצמה אוטומטית (Self-Healing) והגיעה למצב הרצוי בלי אף התערבות ידנית בתוך קובנרטיס.
+
+🛠️ הוראות הפעלה ותחזוקה מקומית
+פתיחת פורט לארגו-CD
+במידה והקשר לדפדפן ניתק עקב ריסטארט של פודמן, יש להרים מחדש את הצינור:
+
+PowerShell
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+עדכון גרסאות ואימג'ים ללא רשת חיצונית
+אם ברצונכם להוסיף אימג' חדש לקלאסטר ללא תלות ברשת:
+
+משכו אותו ללוקאל (podman pull <image>)
+
+שמרו ל-Tar: podman save -o image.tar <image>
+
+העתיקו לנוד: podman cp image.tar gitops-cluster-control-plane:/image.tar
+
+הכניסו ל-Runtime: podman exec gitops-cluster-control-plane ctr --namespace k8s.io images import /image.tar
+
+עדכנו את קובץ ה-deployment.yaml לשם המתאים עם הקידומת localhost/.
+
+<div dir="rtl">
