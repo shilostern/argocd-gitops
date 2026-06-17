@@ -32,38 +32,18 @@
   ```powershell
   podman save -o whoami-latest.tar traefik/whoami:latest
 
-העתקנו את הקובץ לתוך קונטיינר ה-Control Plane, והזרקנו אותו ישירות לתוך ה-Namespace הפנימי של קובנרטיס ב-containerd באמצעות:
+לאחר מכן העתקנו את הקובץ ישירות לתוך קונטיינר ה-Control Plane:
+
+PowerShell
+podman cp whoami-latest.tar gitops-cluster-control-plane:/whoami-latest.tar
+לבסוף, הזרקנו את האימג' לתוך ה-Namespace הפנימי של קובנרטיס ב-containerd:
 
 PowerShell
 podman exec gitops-cluster-control-plane ctr --namespace k8s.io images import /whoami-latest.tar
-האתגר האחרון: ה-Container Runtime רשם את האימג' תחת ה-Namespace המקומי שלו כ-localhost/traefik/whoami:latest. פודים שביקשו את השם המקורי המשיכו להיכשל.
+האתגר האחרון: ה-Container Runtime רשם את האימג' תחת ה-Namespace המקומי שלו כ-localhost/traefik/whoami:latest. פודים שביקשו את השם המקורי המשיכו להיכשל במשיכה.
 
-התיקון בקוד: ביצענו התאמה (Realignment) מלאה בקוד המקור בגיט (בתוך ה-Manifest של ה-Deployment ב-Base):
+התיקון בקוד: ביצענו התאמה (Realignment) מלאה בקוד המקור בגיט (בתוך ה-Manifest של ה-Deployment בקובץ ה-Base) ועדכנו את השם המדויק:
 
 YAML
 image: localhost/traefik/whoami:latest
 ברגע שהשינוי נדחף, ArgoCD זיהה את הקומיט, עדכן את ה-ReplicaSet, וקובנרטיס משך את האימג' לוקאלית בשבריר שנייה והביא את האפליקציה למצב Healthy & Running.
-
-💡 תובנות מפתח (Key Takeaways)
-עבודה בסביבת פודמן ווינדוס: דורשת לעיתים קרובות פתרונות מותאמים (כמו שימוש ב-ctr) מכיוון שכלי ה-Automated Loading של קלאסטרים מקומיים מותאמים בבסיסם ל-Docker Daemon הסטנדרטי.
-
-עוצמת ה-GitOps (ארגו-CD): למרות כל הצרות והריסטארטים ברמת התשתית והמחשב, ברגע שהתשתית חזרה לעצמה והצהרנו על ה-Image הנכון ב-Git, המערכת תיקנה את עצמה אוטומטית (Self-Healing) והגיעה למצב הרצוי בלי אף התערבות ידנית בתוך קובנרטיס.
-
-🛠️ הוראות הפעלה ותחזוקה מקומית
-פתיחת פורט לארגו-CD
-במידה והקשר לדפדפן ניתק עקב ריסטארט של פודמן, יש להרים מחדש את הצינור:
-
-PowerShell
-kubectl port-forward svc/argocd-server -n argocd 8080:443
-עדכון גרסאות ואימג'ים ללא רשת חיצונית
-אם ברצונכם להוסיף אימג' חדש לקלאסטר ללא תלות ברשת:
-
-משכו אותו ללוקאל (podman pull <image>)
-
-שמרו ל-Tar: podman save -o image.tar <image>
-
-העתיקו לנוד: podman cp image.tar gitops-cluster-control-plane:/image.tar
-
-הכניסו ל-Runtime: podman exec gitops-cluster-control-plane ctr --namespace k8s.io images import /image.tar
-
-עדכנו את קובץ ה-deployment.yaml לשם המתאים עם הקידומת localhost/.
