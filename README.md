@@ -1,157 +1,60 @@
-<div dir="rtl" style="text-align: right;">
+<div dir="rtl" align="right">
 
 # פרויקט GitOps: תשתית דקלרטיבית עם ArgoCD, Kind ו-Podman
 
-פרויקט זה מדגים יישום של מתודולוגיית GitOps בסביבת עבודה מקומית. הפתרון משתמש ב-ArgoCD לניהול קונפיגורציות Kubernetes, כאשר כל משאבי המערכת מנוהלים כקוד (IaC) ב-Repository זה.
+פרויקט זה מדגים יישום של מתודולוגיית GitOps בסביבת עבודה מקומית. הפתרון משתמש ב-ArgoCD לניהול קונפיגורציות קובנרטיס, כאשר כל משאבי המערכת מנוהלים כקוד (IaC) ב-Repository זה.
 
 ---
 
 ## 1. הסבר על הפתרון
-
-הפתרון מבוסס על ניהול דקלרטיבי של אפליקציית whoami.
-
-תהליך העבודה כלל:
-- הקמת קלאסטר Kubernetes מקומי באמצעות Kind (על גבי Podman)
-- הגדרת ArgoCD כקונטרולר סנכרון
-- פריסת האפליקציה באמצעות מבנה Base ו-Overlays (Kustomize)
-
-כל שינוי ב-Repository מתורגם אוטומטית למצב הרצוי בקלאסטר באמצעות מנגנון ה-Reconciliation של ArgoCD.
-
----
+הפתרון מבוסס על ניהול דקלרטיבי של אפליקציית whoami. תהליך העבודה כלל הקמת קלאסטר Kubernetes מקומי באמצעות Kind (על גבי מנוע Podman), הגדרת ArgoCD כקונטרולר לסנכרון, ופריסת האפליקציה תוך שימוש במבנה של Base ו-Overlays (Kustomize). כל שינוי שבוצע ב-Repository תורגם אוטומטית למצב הרצוי בקלאסטר על ידי מנגנון ה-Reconciliation של ArgoCD.
 
 ## 2. מבנה ה-Repository
+ה-Repo תוכנן לפי עקרונות ה-Kustomize, המאפשרים הפרדה בין בסיס הקוד (Base) לבין התאמות לסביבות (Overlays):
 
-ה-Repo בנוי לפי עקרונות Kustomize:
+| נתיב | תיאור |
+| :--- | :--- |
+| **apps/whoami/base** | מכיל את המניפסטים הבסיסיים המשותפים לכל הסביבות. |
+| **apps/whoami/environments** | מכיל הגדרות ספציפיות לכל סביבה (פיתוח/ייצור). |
+| **argocd** | מכיל את קבצי ה-Application המגדירים ל-ArgoCD מה לסנכרן. |
 
-- `apps/whoami/base`  
-  מניפסטים בסיסיים (Deployment, Service) לכל הסביבות
-
-- `apps/whoami/environments`  
-  קונפיגורציות ייעודיות לסביבות (פיתוח / ייצור)
-
-- `argocd`  
-  קבצי Application של ArgoCD לסנכרון המשאבים
-
-**למה מבנה זה?**  
-כדי לאפשר עקרון DRY: שינוי ב-base משפיע על כל הסביבות, בעוד Overlays מאפשרים התאמות בלי שכפול קוד.
-
----
+למה בחרנו במבנה זה? כדי לאפשר גמישות (DRY - Don't Repeat Yourself). שינוי בבסיס משפיע על כל הסביבות, בעוד ששינויים ב-Overlays מאפשרים קונפיגורציה ייחודית ללא כפילות קוד.
 
 ## 3. תהליך הפריסה
-
-נבחר GitOps כי הוא מאפשר:
-- שקיפות מלאה (מה שבגיט = מה שרץ)
-- יכולת Rollback מהירה
-
-תהליך העבודה:
-- Push ל-Repo
-- ArgoCD מזהה שינוי
-- סנכרון אוטומטי לקלאסטר
-- ללא שימוש ישיר ב-kubectl
-
----
+נבחרה שיטת ה-GitOps כיוון שהיא מבטיחה שקיפות מוחלטת (מה שכתוב בגיט הוא מה שרץ בפועל) ומאפשרת שחזור מהיר (Rollback) ע"י חזרה לקומיט קודם. תהליך הפריסה מבוסס על "דחיפת" שינויים ל-Repo, זיהוי אוטומטי על ידי ArgoCD, והחלתם על הקלאסטר ללא התערבות ידנית ב-kubectl.
 
 ## 4. החלטות תכנוניות מרכזיות
-
-- שימוש ב-Podman במקום Docker  
-  התאמות נדרשו ברמת runtime
-
-- שימוש ב-Image Tags גרסאיים  
-  הימנעות מ-latest לצורך יציבות
-
----
+ההחלטות המרכזיות כללו שימוש ב-Podman במקום Docker כדי להבטיח תאימות סביבתית, וניהול גרסאות עם Image Tags קשיחים (לא Latest) כדי להבטיח יציבות בסביבות שונות.
 
 ## 5. תהליך הלמידה
+הלמידה הייתה תהליך הדרגתי ומעשי שהתבסס על קריאת תיעוד רשמי של ArgoCD ו-Kind, התמודדות עם שגיאות רשת ו-Runtime, ושימוש ב-AI כשותף להבנת מושגי DevOps בזמן אמת.
 
-הלמידה בוצעה בצורה הדרגתית:
-- קריאה בתיעוד ArgoCD ו-Kind
-- ניסוי וטעייה בסביבת עבודה אמיתית
-- שימוש ב-AI להבנת מושגים ופתרון בעיות CLI
-
----
-
-## 6. גישת הלמידה
-
-גישה של Problem Solving:
-- הבנת workflow דרך דוגמאות
-- שימוש ב-AI לפירוק בעיות מורכבות
-- חקירה ממוקדת של שגיאות בפועל
-
----
+## 6. כיצד ניגשתי ללמידה?
+ניגשתי ללמידה כ-"Problem-Solving Journey". התמקדתי בפתרון שגיאות ספציפיות דרך פירוק פקודות מורכבות (כמו kubectl port-forward) בעזרת AI, במקום ללמוד את כל התיעוד מאפס.
 
 ## 7. אתגרים טכנולוגיים והתמודדות
+במהלך הקמת סביבת ה-GitOps ופריסת האפליקציה whoami, נתקלתי במספר אתגרים:
 
-### 7.1 בעיות רשת ומשיכת Images
+1. בעיות רשת: ה-Pods נכנסו למצב ImagePullBackOff כי הקלאסטר היה מנותק מהאינטרנט. הפתרון היה מעבר לעבודה Offline עם טעינת Images ידנית.
+2. מגבלות kind load: נתקלתי בבעיות תאימות בין Kind ל-Podman. הפתרון היה עבודה ישירה מול ה-Container Runtime של Kubernetes.
+3. קפיאת Podman Machine: קריסת ה-Control Plane דרשה הפעלה מחדש של ה-Container וחיבור מחדש של ה-API Server.
+4. התאמת שמות Images: ייבוא ידני יצר שמות כגון localhost/..., מה שחייב עדכון ידני ב-Deployment.
 
-**בעיה:**  
-ImagePullBackOff עקב חוסר גישה ל-Docker Hub מתוך הקלאסטר
-
-**פתרון:**  
-מעבר לעבודה Offline וטעינת Images ידנית
-
----
-
-### 7.2 מגבלות kind load עם Podman
-
-**בעיה:**  
-חוסר תאימות בין Kind ל-Podman בטעינת Images
-
-**פתרון:**  
-עבודה ישירה מול container runtime
-
----
-
-### 7.3 קפיאת Podman Machine
-
-**בעיה:**  
-ניתוק של API Server וקריסת הקלאסטר
-
-**פתרון:**  
-הפעלת control plane מחדש באמצעות Podman
-
----
-
-### 7.4 טעינת Image ל-containerd והתאמת שמות
-
-**בעיה:**  
-חוסר התאמה בשם ה-Image בין deployment ל-import
-
-**פתרון:**  
-עדכון ה-Deployment כך שיתאים ל-image המקומי ולאחר מכן redeploy דרך ArgoCD
-
----
-
-## 8. פרומפטים לשימוש ב-AI
-
-דוגמאות לשאלות עבודה:
-
-- ArgoCD shows OutOfSync but manifests look correct. How to debug?
-- How to check ImagePullBackOff in Kind?
-- Why use Kustomize instead of single YAML?
-- How to import tar image into containerd offline?
-
----
+## 8. דוגמאות לפורמטים (Prompts) לשימוש ב-AI
+השאלות שסייעו לי לפצח את האתגרים:
+* "ArgoCD shows 'OutOfSync', how do I debug the generated manifest?"
+* "I am getting ImagePullBackOff, how do I check if my container runtime in Kind can see my local images?"
+* "How can I import a .tar file directly into Kind's containerd runtime?"
 
 ## 9. שיפורים עתידיים
-
-- Auto Scaling עם HPA
-- CI/CD עם GitHub Actions
-- בניית אימג'ים אוטומטית ועדכון repo
-
----
+* Auto-Scaling: הוספת HPA להתאמת מספר הפודים לעומס.
+* CI/CD Pipeline: שילוב תהליך אוטומטי לבניית אימג'ים (GitHub Actions).
 
 ## 10. סביבת Production
-
-- שימוש ב-Private Registry
-- הוספת Monitoring עם Prometheus + Grafana
-
----
+בסביבת Prod הייתי משנה: שימוש ב-Private Container Registry מאובטח והוספת ניטור (Prometheus ו-Grafana).
 
 ## 11. סיכונים בפתרון הנוכחי
-
-- Single Point of Failure (תלות ב-Podman Machine)
-- חוסר סריקת אבטחה לאימג'ים
-
----
+* Single Point of Failure: תלות ב-Podman Machine המקומית.
+* חוסר אבטחה: ניהול אימג'ים ידני ללא סריקת פגיעות.
 
 </div>
