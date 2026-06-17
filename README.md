@@ -21,7 +21,7 @@ GitOps was chosen for its total transparency (what is in Git is what runs in the
 
 ## 4. Key Design Decisions
 * **Podman over Docker:** Chosen for environment compatibility, which required specific adjustments to the container runtime.
-* **Image Tagging:** Currently utilizing the `latest` tag for the application images to facilitate continuous updates and testing.
+* **Kustomize Deployment:** I consciously chose to use Kustomize as the deployment method specifically to gain experience and learn new methodologies for managing cluster resources.
 
 ## 5. The Learning Process
 The learning path was gradual and hands-on, based on reading official ArgoCD and Kind documentation, troubleshooting network and runtime errors, and using AI as a partner to understand complex DevOps concepts in real-time.
