@@ -1,18 +1,16 @@
-<div dir="rtl">
-
 # פרויקט GitOps עם ArgoCD, Kind ו-Podman
 
-פרויקט זה מציג ארכיטקטורת GitOps מלאה עבור סביבת פיתוח מקומית (Local Development), המבוססת על **ArgoCD** לניהול וסנכרון דקלרטיבי של משאבי Kubernetes, על גבי **Kind Cluster** המורץ באמצעות **Podman** בסביבת Windows.
+פרויקט זה מציג ארכיטקטורת GitOps מלאה עבור סביבת פיתוח מקומית (Local Development), המבוססת על **ArgoCD** לניהול וסנכרון דקלרטיבי של משאבי Kubernetes, על גבי Cluster מסוג **Kind** המורץ באמצעות **Podman** בסביבת Windows.
 
 ## 🚀 ארכיטקטורת המערכת
 
-המערכת מבוססת על עקרון ה־Single Source of Truth, שבו כל קובצי ה־Manifest (כגון Deployment ו־Service) מנוהלים ב־Git Repository זה.
+המערכת מבוססת על עקרון ה־Single Source of Truth, שבו כל קובצי ה־Manifest (כגון Deployment ו־Service) מנוהלים ב־Git Repository.
 
 ArgoCD מנטר את ה־Repository באופן רציף ומבצע Reconciliation אוטומטי מול ה־Cluster המקומי.
 
 ---
 
-## 📑 אתגרים טכנולוגיים והתמודדות (Troubleshooting & Engineering Challenges)
+## 📑 אתגרים טכנולוגיים והתמודדות
 
 במהלך הקמת סביבת ה־GitOps ופריסת האפליקציה `whoami-dev` באמצעות ArgoCD, נתקלנו במספר אתגרי אינטגרציה ורשת בין Windows Host, Podman, Kind ו־containerd.
 
@@ -22,7 +20,7 @@ ArgoCD מנטר את ה־Repository באופן רציף ומבצע Reconciliatio
 
 #### האתגר
 
-לאחר הסנכרון הראשוני ב־ArgoCD, ה־Pods נכנסו למצב `ImagePullBackOff` ו־`ErrImagePull`.
+לאחר הסנכרון הראשוני ב־ArgoCD, Pods של Kubernetes נכנסו למצבי `ImagePullBackOff` ו־`ErrImagePull`.
 
 בדיקה באמצעות:
 
@@ -30,7 +28,7 @@ ArgoCD מנטר את ה־Repository באופן רציף ומבצע Reconciliatio
 kubectl describe pod <pod-name>
 ```
 
-העלתה כי ה־Container Runtime של ה־Kind Cluster אינו מצליח לגשת ל־Docker Hub עקב בעיות DNS וקישוריות מתוך המכונה הווירטואלית.
+העלתה כי ה־Container Runtime של Cluster ה־Kind לא הצליח לגשת ל־Docker Hub עקב בעיות DNS וקישוריות מתוך המכונה הווירטואלית.
 
 #### הפתרון
 
@@ -75,15 +73,15 @@ KIND_EXPERIMENTAL_PROVIDER=podman
 
 #### האתגר
 
-במהלך ניסיונות איפוס רשת, ה־Podman Machine נכנסה למצב לא תקין.
+במהלך ניסיונות איפוס רשת, Podman Machine נכנסה למצב לא תקין.
 
-מצד אחד התקבלה הודעה:
+מצד אחד התקבלה ההודעה:
 
 ```text
 already running
 ```
 
-ומצד שני ה־Kubernetes API Server הפסיק להגיב.
+ומצד שני Kubernetes API Server הפסיק להגיב.
 
 בנוסף, פעולות Port Forward ל־ArgoCD נכשלו עם:
 
@@ -93,7 +91,7 @@ connection refused
 
 #### הפתרון
 
-בוצעה הפעלה מחדש של ה־Control Plane Container:
+בוצעה הפעלה מחדש של Container ה־Control Plane:
 
 ```powershell
 podman start gitops-cluster-control-plane
@@ -113,13 +111,13 @@ podman start gitops-cluster-control-plane
 podman save -o whoami-latest.tar traefik/whoami:latest
 ```
 
-לאחר מכן הועתק הקובץ אל ה־Control Plane Container ויובא ישירות ל־containerd:
+לאחר מכן הועתק הקובץ אל Container ה־Control Plane ויובא ישירות ל־containerd:
 
 ```powershell
 podman exec gitops-cluster-control-plane ctr --namespace k8s.io images import /whoami-latest.tar
 ```
 
-לאחר הייבוא התברר כי ה־Image נרשם תחת השם:
+לאחר הייבוא התברר כי ה־Image נרשם בשם:
 
 ```text
 localhost/traefik/whoami:latest
@@ -176,25 +174,25 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 
 ### טעינת Image חדש ללא גישה לאינטרנט
 
-#### 1. משיכת ה־Image למחשב המקומי
+#### 1. משיכת Image למחשב המקומי
 
 ```powershell
 podman pull <image>
 ```
 
-#### 2. שמירת ה־Image לקובץ TAR
+#### 2. שמירת Image לקובץ TAR
 
 ```powershell
 podman save -o image.tar <image>
 ```
 
-#### 3. העתקת הקובץ אל ה־Control Plane Node
+#### 3. העתקת הקובץ אל Control Plane Node
 
 ```powershell
 podman cp image.tar gitops-cluster-control-plane:/image.tar
 ```
 
-#### 4. ייבוא ה־Image אל containerd
+#### 4. ייבוא Image אל containerd
 
 ```powershell
 podman exec gitops-cluster-control-plane ctr --namespace k8s.io images import /image.tar
@@ -213,10 +211,8 @@ image: localhost/<image>
 ## ✅ סטטוס הפרויקט
 
 * ArgoCD מותקן ופועל.
-* Kind Cluster פועל על גבי Podman.
+* Cluster מסוג Kind פועל על גבי Podman.
 * GitOps Synchronization פעיל.
 * פריסת `whoami-dev` מבוצעת דרך ArgoCD.
 * Images נטענים מקומית ללא תלות ב־Docker Hub.
 * המערכת נמצאת במצב Healthy ו־Synced.
-
-</div>
