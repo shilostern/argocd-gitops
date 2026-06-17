@@ -1,4 +1,4 @@
-<div dir="rtl">
+<div dir="rtl" style="text-align: right;">
 
 # פרויקט GitOps: תשתית דקלרטיבית עם ArgoCD, Kind ו-Podman
 
@@ -33,8 +33,7 @@
   קבצי Application של ArgoCD לסנכרון המשאבים
 
 **למה מבנה זה?**  
-כדי לאפשר עקרון DRY:
-שינוי ב-base משפיע על כל הסביבות, בעוד Overlays מאפשרים התאמות בלי שכפול קוד.
+כדי לאפשר עקרון DRY: שינוי ב-base משפיע על כל הסביבות, בעוד Overlays מאפשרים התאמות בלי שכפול קוד.
 
 ---
 
