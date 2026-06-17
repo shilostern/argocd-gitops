@@ -12,9 +12,9 @@
 ## 2. מבנה ה-Repository
 ה-Repo תוכנן לפי עקרונות ה-Kustomize, המאפשרים הפרדה בין בסיס הקוד (Base) לבין התאמות לסביבות (Overlays):
 
-apps/whoami/base: מכיל את המניפסטים הבסיסיים המשותפים לכל הסביבות.
-apps/whoami/environments: מכיל הגדרות ספציפיות לכל סביבה (פיתוח/ייצור).
-argocd: מכיל את קבצי ה-Application המגדירים ל-ArgoCD מה לסנכרן.
+1. apps/whoami/base: מכיל את המניפסטים הבסיסיים המשותפים לכל הסביבות.
+2. apps/whoami/environments: מכיל הגדרות ספציפיות לכל סביבה (פיתוח/ייצור).
+3. argocd: מכיל את קבצי ה-Application המגדירים ל-ArgoCD מה לסנכרן.
 
 למה בחרנו במבנה זה? כדי לאפשר גמישות (DRY - Don't Repeat Yourself). שינוי בבסיס משפיע על כל הסביבות, בעוד ששינויים ב-Overlays מאפשרים קונפיגורציה ייחודית ללא כפילות קוד.
 
@@ -39,19 +39,20 @@ argocd: מכיל את קבצי ה-Application המגדירים ל-ArgoCD מה ל
 
 ## 8. דוגמאות לפורמטים (Prompts) לשימוש ב-AI
 השאלות שסייעו לי לפצח את האתגרים כללו את:
-ArgoCD shows 'OutOfSync', how do I debug the generated manifest?
-I am getting ImagePullBackOff, how do I check if my container runtime in Kind can see my local images?
-How can I import a .tar file directly into Kind's containerd runtime?
+1. ArgoCD shows 'OutOfSync', how do I debug the generated manifest?
+2. I am getting ImagePullBackOff, how do I check if my container runtime in Kind can see my local images?
+3. How can I import a .tar file directly into Kind's containerd runtime?
 
 ## 9. שיפורים עתידיים
-Auto-Scaling: הוספת HPA להתאמת מספר הפודים לעומס.
-CI/CD Pipeline: שילוב תהליך אוטומטי לבניית אימג'ים (GitHub Actions).
+1. Auto-Scaling: הוספת HPA להתאמת מספר הפודים לעומס.
+2. CI/CD Pipeline: שילוב תהליך אוטומטי לבניית אימג'ים (GitHub Actions).
 
 ## 10. סביבת Production
-בסביבת Prod הייתי משנה: שימוש ב-Private Container Registry מאובטח והוספת ניטור (Prometheus ו-Grafana).
+1. Registry חיצוני: שימוש ב-Private Container Registry מאובטח.
+2. ניטור: הוספת Prometheus ו-Grafana לניטור תקינות הפודים.
 
 ## 11. סיכונים בפתרון הנוכחי
-Single Point of Failure: תלות ב-Podman Machine המקומית.
-חוסר אבטחה: ניהול אימג'ים ידני ללא סריקת פגיעות.
+1. Single Point of Failure: תלות ב-Podman Machine המקומית.
+2. חוסר אבטחה: ניהול אימג'ים ידני ללא סריקת פגיעות.
 
 </div>
