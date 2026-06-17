@@ -1,243 +1,75 @@
-# פרויקט GitOps עם ArgoCD, Kind ו-Podman
+<div dir="rtl" align="right">
 
-## 🎯 מטרת הפרויקט
+# פרויקט GitOps: תשתית דקלרטיבית עם ArgoCD, Kind ו-Podman
 
-בפרויקט זה הקמתי סביבת GitOps מלאה המבוססת על ArgoCD, Kind ו-Podman.
-
-מטרת הפרויקט הייתה להעמיק את הידע שלי ב-Kubernetes ובמתודולוגיית GitOps, להבין לעומק את מנגנון ה-Reconciliation של ArgoCD ולהתמודד עם אתגרי תשתית ורשת בסביבת פיתוח מקומית.
+פרויקט זה מדגים יישום של מתודולוגיית GitOps בסביבת עבודה מקומית. הפתרון משתמש ב-ArgoCD לניהול קונפיגורציות קובנרטיס, כאשר כל משאבי המערכת מנוהלים כקוד (IaC) ב-Repository זה.
 
 ---
 
-## 🚀 ארכיטקטורת המערכת
-
-המערכת מבוססת על עקרון ה-Single Source of Truth.
-
-כל קובצי ה-Manifest מנוהלים ב-Git Repository, ו-ArgoCD אחראי לנטר את ה-Repository ולבצע Reconciliation אוטומטי מול ה-Cluster המקומי.
-
-כל שינוי שנדחף ל-Git מסונכרן אוטומטית אל Kubernetes.
-
----
-
-## 📑 אתגרים טכנולוגיים והתמודדות
-
-במהלך הקמת סביבת ה-GitOps ופריסת האפליקציה `whoami-dev` באמצעות ArgoCD, נתקלתי במספר אתגרים משמעותיים הקשורים לרשת, ניהול Images ותאימות בין Podman, Kind ו-Kubernetes.
-
-### 1. בעיות רשת ומשיכת Images
-
-#### האתגר
-
-לאחר הסנכרון הראשוני ב-ArgoCD, ה-Pods נכנסו למצבי:
-
-```text
-ImagePullBackOff
-ErrImagePull
-```
-
-בדיקה באמצעות:
-
-```bash
-kubectl describe pod <pod-name>
-```
-
-הראתה כי ה-Container Runtime של Cluster ה-Kind לא הצליח לגשת ל-Docker Hub עקב בעיות DNS וקישוריות מתוך המכונה הווירטואלית.
-
-#### הפתרון
-
-ניסיתי לעבור ל-GitHub Container Registry (`ghcr.io`), אך גם פתרון זה נכשל.
-
-מכאן הבנתי שה-Cluster מנותק לחלוטין מגישה חיצונית, ולכן החלטתי לעבור לתהליך עבודה Offline המבוסס על טעינת Images באופן ידני.
-
----
-
-### 2. מגבלות kind load בסביבת Podman
-
-#### האתגר
-
-ניסיתי להשתמש בפקודת:
-
-```bash
-kind load docker-image
-```
-
-אך נתקלתי בבעיות תאימות בין Kind לבין Podman.
-
-התקבלו שגיאות כגון:
-
-```text
-ERROR: unknown command "podman-image"
-unknown flag: --name
-```
-
-בנוסף, Kind לא הצליח לזהות Images שהיו קיימים ב-Podman Storage גם לאחר הגדרת:
-
-```bash
-KIND_EXPERIMENTAL_PROVIDER=podman
-```
-
-#### הפתרון
-
-במקום להמשיך להשתמש במנגנון הטעינה של Kind, החלטתי לעבוד ישירות מול ה-Container Runtime של Kubernetes.
-
----
-
-### 3. קפיאת Podman Machine וניתוק ה-API Server
-
-#### האתגר
-
-במהלך ניסיונות איפוס רשת, Podman Machine נכנסה למצב לא תקין.
-
-מצד אחד התקבלה ההודעה:
-
-```text
-already running
-```
-
-ומצד שני Kubernetes API Server הפסיק להגיב.
-
-בנוסף, פעולות Port Forward ל-ArgoCD נכשלו עם השגיאה:
-
-```text
-connection refused
-```
-
-#### הפתרון
-
-הפעלתי מחדש את Container ה-Control Plane:
-
-```powershell
-podman start gitops-cluster-control-plane
-```
-
-לאחר מכן ה-API Server חזר לפעול באופן תקין ויכולתי להפעיל מחדש Port Forward אל ArgoCD.
-
----
-
-### 4. טעינת Image ישירות ל-containerd והתאמת שמות
-
-#### האתגר
-
-כדי לעקוף לחלוטין את התלות בגישה לאינטרנט, ייצאתי את ה-Image מהמחשב המקומי:
-
-```powershell
-podman save -o whoami-latest.tar traefik/whoami:latest
-```
-
-לאחר מכן העתקתי את הקובץ אל Container ה-Control Plane:
-
-```powershell
-podman cp whoami-latest.tar gitops-cluster-control-plane:/whoami-latest.tar
-```
-
-ולאחר מכן ייבאתי אותו ישירות אל containerd:
-
-```powershell
-podman exec gitops-cluster-control-plane ctr --namespace k8s.io images import /whoami-latest.tar
-```
-
-לאחר הייבוא גיליתי שה-Image נרשם בשם:
-
-```text
-localhost/traefik/whoami:latest
-```
-
-בעוד שה-Deployment עדיין הפנה אל:
-
-```text
-traefik/whoami:latest
-```
-
-כתוצאה מכך ה-Pods המשיכו להיכשל.
-
-#### הפתרון
-
-עדכנתי את שדה ה-image ב-Deployment:
-
-```yaml
-image: localhost/traefik/whoami:latest
-```
-
-לאחר ביצוע Commit ו-Push ל-Repository, ArgoCD זיהה את השינוי, עדכן את ה-ReplicaSet ופרס מחדש את האפליקציה.
-
-בתוך זמן קצר האפליקציה עברה למצב:
-
-```text
-Healthy
-Running
-```
-
----
-
-## 💡 תובנות מרכזיות
-
-### עבודה עם Podman בסביבת Windows
-
-השילוב של Podman, Kind ו-Windows חשף אותי לאתגרים שאינם קיימים תמיד בסביבות Docker סטנדרטיות.
-
-במקרים מסוימים נדרשתי לעבוד ישירות מול כלים ברמה נמוכה יותר, כגון `ctr`, במקום להסתמך על מנגנוני האוטומציה המובנים.
-
-### היתרון של GitOps
-
-אחד הדברים המרשימים ביותר שחוויתי בפרויקט היה מנגנון ה-Self-Healing של ArgoCD.
-
-למרות תקלות תשתית, ניתוקי רשת ואתחולים של הסביבה המקומית, ברגע שהמצב הרצוי הוגדר ב-Git, ArgoCD דאג להחזיר את המערכת למצב תקין באופן אוטומטי.
-
----
-
-## 🛠️ הוראות הפעלה ותחזוקה
-
-### פתיחת Port Forward ל-ArgoCD
-
-```powershell
-kubectl port-forward svc/argocd-server -n argocd 8080:443
-```
-
-### טעינת Image חדש ללא גישה לאינטרנט
-
-#### 1. משיכת Image למחשב המקומי
-
-```powershell
-podman pull <image>
-```
-
-#### 2. שמירת Image לקובץ TAR
-
-```powershell
-podman save -o image.tar <image>
-```
-
-#### 3. העתקת קובץ ה-TAR אל ה-Control Plane
-
-```powershell
-podman cp image.tar gitops-cluster-control-plane:/image.tar
-```
-
-#### 4. ייבוא ה-Image אל containerd
-
-```powershell
-podman exec gitops-cluster-control-plane ctr --namespace k8s.io images import /image.tar
-```
-
-#### 5. עדכון Deployment
-
-```yaml
-image: localhost/<image>
-```
-
----
-
-## ✅ סטטוס הפרויקט
-
-| רכיב | סטטוס |
-|-------|--------|
-| ArgoCD | פעיל |
-| Kind Cluster | פעיל |
-| Podman | פעיל |
-| GitOps Synchronization | פעיל |
-| whoami-dev | נפרס בהצלחה |
-| Image Loading | מקומי ללא Docker Hub |
-| Application Health | Healthy |
-| Synchronization Status | Synced |
-
----
-
-פרויקט זה סיפק לי ניסיון מעשי בעבודה עם Kubernetes, GitOps, ArgoCD, Podman, פתרון תקלות תשתית וניתוח בעיות רשת בסביבת פיתוח מקומית.
+## 1. הסבר על הפתרון
+הפתרון מבוסס על ניהול דקלרטיבי של אפליקציית whoami. תהליך העבודה כלל הקמת קלאסטר Kubernetes מקומי באמצעות Kind (על גבי מנוע Podman), הגדרת ArgoCD כקונטרולר לסנכרון, ופריסת האפליקציה תוך שימוש במבנה של Base ו-Overlays (Kustomize). כל שינוי שבוצע ב-Repository תורגם אוטומטית למצב הרצוי בקלאסטר על ידי מנגנון ה-Reconciliation של ArgoCD.
+
+## 2. מבנה ה-Repository
+ה-Repo תוכנן לפי עקרונות ה-Kustomize, המאפשרים הפרדה בין בסיס הקוד (Base) לבין התאמות לסביבות (Overlays):
+* **apps/whoami/base:** מכיל את המניפסטים הבסיסיים (Deployment, Service) המשותפים לכל הסביבות.
+* **apps/whoami/environments:** מכיל הגדרות ספציפיות לכל סביבה (פיתוח/ייצור).
+* **argocd:** מכיל את קבצי ה-Application המגדירים ל-ArgoCD מה לסנכרן ומאיפה.
+למה בחרנו במבנה זה? כדי לאפשר גמישות (DRY - Don't Repeat Yourself). שינוי בבסיס משפיע על כל הסביבות, בעוד ששינויים ב-Overlays מאפשרים קונפיגורציה ייחודית (כמו כמות Replicas) ללא כפילות קוד.
+
+## 3. תהליך הפריסה
+נבחרה שיטת ה-GitOps כיוון שהיא מבטיחה שקיפות מוחלטת (מה שכתוב בגיט הוא מה שרץ בפועל) ומאפשרת שחזור מהיר (Rollback) ע"י חזרה לקומיט קודם. תהליך הפריסה מבוסס על "דחיפת" שינויים ל-Repo, זיהוי אוטומטי על ידי ArgoCD, והחלתם על הקלאסטר ללא התערבות ידנית ב-kubectl.
+
+## 4. החלטות תכנוניות מרכזיות
+* **שימוש ב-Podman במקום Docker:** החלטה מבוססת תאימות סביבתית, שדרשה התאמות ב-Runtime של ה-Container.
+* **ניהול גרסאות עם Image Tags:** בחירה בשימוש בגרסאות קשיחות במקום latest כדי להבטיח יציבות בסביבות שונות.
+
+## 5. תהליך הלמידה
+הלמידה הייתה תהליך הדרגתי ומעשי:
+* קריאה: תיעוד רשמי של ArgoCD ו-Kind.
+* ניסוי וטעייה: התמודדות עם שגיאות רשת ו-Runtime.
+* AI כשותף: השימוש ב-AI (כמו ChatGPT/Gemini) אפשר לי להבין מושגי DevOps מורכבים בזמן אמת, תוך הבנת הקשר שבין שגיאות CLI לפתרונות ארכיטקטוניים.
+
+## 6. כיצד ניגשתי ללמידה?
+ניגשתי ללמידה כ-"Problem-Solving Journey". במקום ללמוד את כל התיעוד מאפס, התמקדתי בפתרון שגיאות ספציפיות:
+* הבנת ה-Workflow של ArgoCD דרך צפייה בסרטוני הדגמה.
+* שימוש ב-AI לפירוק פקודות מורכבות: "מה עושה הפקודה kubectl port-forward?" או "איך אני טוען אימג' ידנית ל-containerd?".
+
+## 7. אתגרים טכנולוגיים והתמודדות
+במהלך הקמת סביבת ה-GitOps ופריסת האפליקציה whoami באמצעות ArgoCD, נתקלתי במספר אתגרים משמעותיים הקשורים לרשת, ניהול Images ותאימות בין Podman, Kind ו-Kubernetes.
+
+**1. בעיות רשת ומשיכת Images**
+* האתגר: לאחר הסנכרון הראשוני ב-ArgoCD, ה-Pods נכנסו למצבי `ImagePullBackOff` ו-`ErrImagePull`. בדיקה הראתה כי ה-Container Runtime לא הצליח לגשת ל-Docker Hub עקב בעיות קישוריות.
+* הפתרון: מכיוון שה-Cluster מנותק לחלוטין, עברתי לתהליך עבודה Offline המבוסס על טעינת Images ידנית.
+
+**2. מגבלות kind load בסביבת Podman**
+* האתגר: נתקלתי בבעיות תאימות בין Kind לבין Podman בשימוש ב-`kind load docker-image`.
+* הפתרון: עבודה ישירה מול ה-Container Runtime של Kubernetes.
+
+**3. קפיאת Podman Machine וניתוק ה-API Server**
+* האתגר: קריסת ה-Control Plane וכישלון של Port Forward ל-ArgoCD.
+* הפתרון: הפעלה מחדש של ה-Container המנהל וחיבור מחדש של ה-API Server.
+
+**4. טעינת Image ישירות ל-containerd והתאמת שמות**
+* האתגר: אי-התאמה בין השם שה-Image מקבל בייבוא (`localhost/...`) לבין השם ב-Deployment.
+* הפתרון: עדכון שדה ה-image ב-Deployment ל-`localhost/traefik/whoami:latest`.
+
+## 8. דוגמאות לפורמטים (Prompts) לשימוש ב-AI
+* "ArgoCD shows 'OutOfSync' but the Kustomize base and overlay seem correct. How do I debug the generated manifest?"
+* "I am getting ImagePullBackOff, how do I check if my container runtime in Kind can see my local images?"
+* "Explain the Kustomize directory structure—why can't I just use a single deployment.yaml?"
+* "How can I import a .tar file directly into Kind's containerd runtime when the cluster has no internet access?"
+
+## 9. שיפורים עתידיים
+* **Auto-Scaling:** הוספת HPA כדי שהמערכת תתאים את מספר הפודים לעומס בזמן אמת.
+* **CI/CD Pipeline:** שילוב תהליך אוטומטי שבונה אימג'ים (GitHub Actions) ומעדכן את ה-Repo אוטומטית.
+
+## 10. סביבת Production
+בסביבת Prod הייתי משנה:
+* **Registry חיצוני:** שימוש ב-Private Container Registry מאובטח.
+* **ניטור (Monitoring):** הוספת Prometheus ו-Grafana לניטור תקינות הפודים.
+
+## 11. סיכונים בפתרון הנוכחי
+* **Single Point of Failure:** תלות ב-Podman Machine המקומית; קריסתה משביתה את הקלאסטר.
+* **חוסר אבטחה:** ניהול האימג'ים באופן ידני ללא סריקת פגיעות.
+
+</div>
