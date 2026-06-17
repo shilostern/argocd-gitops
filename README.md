@@ -1,26 +1,34 @@
 # פרויקט GitOps עם ArgoCD, Kind ו-Podman
 
-פרויקט זה מציג ארכיטקטורת GitOps מלאה עבור סביבת פיתוח מקומית (Local Development), המבוססת על **ArgoCD** לניהול וסנכרון דקלרטיבי של משאבי Kubernetes, על גבי Cluster מסוג **Kind** המורץ באמצעות **Podman** בסביבת Windows.
+## 🎯 מטרת הפרויקט
+
+בפרויקט זה הקמתי סביבת GitOps מלאה המבוססת על ArgoCD, Kind ו-Podman.
+
+מטרת הפרויקט הייתה להעמיק את ההיכרות שלי עם Kubernetes ועם עקרונות GitOps, להבין כיצד ArgoCD מנהל את מצב המערכת באופן דקלרטיבי, ולהתמודד עם אתגרי תשתית ורשת בסביבת פיתוח מקומית המבוססת על Windows.
+
+---
 
 ## 🚀 ארכיטקטורת המערכת
 
-המערכת מבוססת על עקרון ה־Single Source of Truth, שבו כל קובצי ה־Manifest (כגון Deployment ו־Service) מנוהלים ב־Git Repository.
+המערכת מבוססת על עקרון ה־Single Source of Truth, שבו כל קובצי ה־Manifest (כגון Deployment ו-Service) מנוהלים ב־Git Repository.
 
-ArgoCD מנטר את ה־Repository באופן רציף ומבצע Reconciliation אוטומטי מול ה־Cluster המקומי.
+ArgoCD מנטר באופן רציף את ה־Repository ומבצע Reconciliation אוטומטי מול ה־Cluster המקומי. כל שינוי שנדחף ל־Git מסונכרן באופן אוטומטי אל סביבת Kubernetes.
 
 ---
 
 ## 📑 אתגרים טכנולוגיים והתמודדות
 
-במהלך הקמת סביבת ה־GitOps ופריסת האפליקציה `whoami-dev` באמצעות ArgoCD, נתקלנו במספר אתגרי אינטגרציה ורשת בין Windows Host, Podman, Kind ו־containerd.
+במהלך הקמת סביבת ה־GitOps ופריסת האפליקציה `whoami-dev` באמצעות ArgoCD, נתקלתי במספר אתגרי אינטגרציה ורשת בין Windows, Podman, Kind ו־containerd.
 
-להלן האתגרים המרכזיים והפתרונות שיושמו.
+להלן האתגרים המרכזיים והדרך שבה פתרתי אותם.
+
+---
 
 ### 1. בעיות רשת ומשיכת Images (`ImagePullBackOff`)
 
 #### האתגר
 
-לאחר הסנכרון הראשוני ב־ArgoCD, Pods של Kubernetes נכנסו למצבי `ImagePullBackOff` ו־`ErrImagePull`.
+לאחר הסנכרון הראשוני ב־ArgoCD, ה־Pods נכנסו למצבי `ImagePullBackOff` ו־`ErrImagePull`.
 
 בדיקה באמצעות:
 
@@ -32,9 +40,9 @@ kubectl describe pod <pod-name>
 
 #### הפתרון
 
-בוצע ניסיון מעבר ל־GitHub Container Registry (`ghcr.io`), אך גם הוא נכשל מאותה סיבה.
+תחילה ניסיתי לעבור ל־GitHub Container Registry (`ghcr.io`), אך גם פתרון זה נכשל מאותה סיבה.
 
-המסקנה הייתה שה־Cluster מנותק לחלוטין מגישה חיצונית, ולכן הוחלט לעבור לתהליך עבודה Offline המבוסס על טעינת Images באופן ידני.
+בשלב זה הגעתי למסקנה שה־Cluster מנותק לחלוטין מגישה חיצונית, ולכן החלטתי לעבור לתהליך עבודה Offline המבוסס על טעינת Images באופן ידני.
 
 ---
 
@@ -42,22 +50,22 @@ kubectl describe pod <pod-name>
 
 #### האתגר
 
-ניסיון להשתמש בפקודת:
+ניסיתי להשתמש בפקודת:
 
 ```bash
 kind load docker-image
 ```
 
-נכשל עקב בעיות תאימות בין Kind לבין Podman.
+כדי לטעון Images ישירות אל ה־Cluster.
 
-התקבלו שגיאות כגון:
+הפקודה נכשלה עקב בעיות תאימות בין Kind לבין Podman, והתקבלו שגיאות כגון:
 
 ```text
 ERROR: unknown command "podman-image"
 unknown flag: --name
 ```
 
-בנוסף, Kind לא הצליח לזהות Images שהיו קיימים ב־Podman Storage גם לאחר הגדרת:
+בנוסף, Kind לא הצליח לזהות Images שהיו קיימים ב־Podman Storage, גם לאחר הגדרת:
 
 ```bash
 KIND_EXPERIMENTAL_PROVIDER=podman
@@ -65,7 +73,7 @@ KIND_EXPERIMENTAL_PROVIDER=podman
 
 #### הפתרון
 
-במקום להמשיך להשתמש במנגנון הטעינה של Kind, הוחלט לעבוד ישירות מול ה־Container Runtime של Kubernetes.
+במקום להמשיך להשתמש במנגנון הטעינה של Kind, החלטתי לעבוד ישירות מול ה־Container Runtime של Kubernetes.
 
 ---
 
@@ -83,7 +91,7 @@ already running
 
 ומצד שני Kubernetes API Server הפסיק להגיב.
 
-בנוסף, פעולות Port Forward ל־ArgoCD נכשלו עם:
+בנוסף, פעולות Port Forward ל־ArgoCD נכשלו עם השגיאה:
 
 ```text
 connection refused
@@ -91,13 +99,13 @@ connection refused
 
 #### הפתרון
 
-בוצעה הפעלה מחדש של Container ה־Control Plane:
+הפעלתי מחדש את Container ה־Control Plane:
 
 ```powershell
 podman start gitops-cluster-control-plane
 ```
 
-לאחר מכן ה־API Server חזר לפעול וניתן היה להפעיל מחדש Port Forward.
+לאחר מכן ה־API Server חזר לפעול באופן תקין ויכולתי להפעיל מחדש Port Forward אל ArgoCD.
 
 ---
 
@@ -105,19 +113,25 @@ podman start gitops-cluster-control-plane
 
 #### האתגר
 
-כדי לעקוף לחלוטין את התלות בגישה לאינטרנט, בוצע ייצוא של ה־Image מהמחשב המקומי:
+כדי לעקוף לחלוטין את התלות בגישה לאינטרנט, ייצאתי את ה־Image מהמחשב המקומי:
 
 ```powershell
 podman save -o whoami-latest.tar traefik/whoami:latest
 ```
 
-לאחר מכן הועתק הקובץ אל Container ה־Control Plane ויובא ישירות ל־containerd:
+לאחר מכן העתקתי את הקובץ אל Container ה־Control Plane:
+
+```powershell
+podman cp whoami-latest.tar gitops-cluster-control-plane:/whoami-latest.tar
+```
+
+ולאחר מכן ייבאתי אותו ישירות אל containerd:
 
 ```powershell
 podman exec gitops-cluster-control-plane ctr --namespace k8s.io images import /whoami-latest.tar
 ```
 
-לאחר הייבוא התברר כי ה־Image נרשם בשם:
+לאחר הייבוא גיליתי שה־Image נרשם בשם:
 
 ```text
 localhost/traefik/whoami:latest
@@ -133,7 +147,7 @@ traefik/whoami:latest
 
 #### הפתרון
 
-בוצע עדכון של שדה ה־`image` ב־Deployment:
+עדכנתי את שדה ה־`image` ב־Deployment:
 
 ```yaml
 image: localhost/traefik/whoami:latest
@@ -154,11 +168,15 @@ Running
 
 ### עבודה עם Podman בסביבת Windows
 
-שילוב של Podman, Kind ו־Windows עשוי לדרוש פתרונות ברמה נמוכה יותר (Low-Level Operations), מכיוון שחלק מהכלים תוכננו במקור לעבודה מול Docker.
+העבודה עם Podman, Kind ו־Windows חשפה אותי לאתגרים שלא תמיד קיימים בסביבות Docker סטנדרטיות.
+
+במקרים מסוימים נדרשתי לעבוד ישירות מול כלי מערכת ברמה נמוכה יותר, כגון `ctr`, במקום להסתמך על מנגנוני האוטומציה המובנים.
 
 ### היתרון של GitOps
 
-למרות תקלות תשתית, ניתוקי רשת ואתחולים של הסביבה המקומית, ברגע שהמצב הרצוי הוגדר ב־Git Repository, ArgoCD החזיר את המערכת למצב תקין באופן אוטומטי באמצעות מנגנון Self-Healing.
+אחד הדברים המרשימים ביותר שחוויתי בפרויקט היה מנגנון ה־Self-Healing של ArgoCD.
+
+למרות תקלות תשתית, ניתוקי רשת ואתחולים של הסביבה המקומית, ברגע שהמצב הרצוי הוגדר ב־Git, ArgoCD דאג להחזיר את המערכת למצב התקין באופן אוטומטי.
 
 ---
 
@@ -212,7 +230,9 @@ image: localhost/<image>
 
 * ArgoCD מותקן ופועל.
 * Cluster מסוג Kind פועל על גבי Podman.
-* GitOps Synchronization פעיל.
-* פריסת `whoami-dev` מבוצעת דרך ArgoCD.
-* Images נטענים מקומית ללא תלות ב־Docker Hub.
+* סנכרון GitOps פעיל.
+* פריסת `whoami-dev` מנוהלת באמצעות ArgoCD.
+* Images נטענים באופן מקומי ללא תלות ב־Docker Hub.
 * המערכת נמצאת במצב Healthy ו־Synced.
+
+פרויקט זה סיפק לי התנסות מעשית בעבודה עם Kubernetes, GitOps, ArgoCD, Podman ופתרון תקלות תשתית בסביבת פיתוח מקומית.
