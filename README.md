@@ -1,121 +1,54 @@
-# פרויקט GitOps: תשתית דקלרטיבית עם ArgoCD, Kind ו-Podman
+פרויקט GitOps: תשתית דקלרטיבית עם ArgoCD, Kind ו-Podman
+פרויקט זה מדגים יישום של מתודולוגיית GitOps בסביבת עבודה מקומית. הפתרון משתמש ב-ArgoCD לניהול קונפיגורציות קובנרטיס, כאשר כל משאבי המערכת מנוהלים כקוד (IaC) ב-Repository זה.
 
-פרויקט זה מדגים יישום של מתודולוגיית GitOps בסביבת עבודה מקומית.  
-הפתרון משתמש ב-ArgoCD לניהול קונפיגורציות Kubernetes, כאשר כל משאבי המערכת מנוהלים כקוד (IaC) ב-Repository זה.
+1. הסבר על הפתרון
+הפתרון מבוסס על ניהול דקלרטיבי של אפליקציית whoami. תהליך העבודה כלל הקמת קלאסטר Kubernetes מקומי באמצעות Kind (על גבי מנוע Podman) והגדרת ArgoCD כקונטרולר לסנכרון. בחרתי להשתמש בשיטת הפריסה Kustomize, למרות שלא היה לי איתה ניסיון קודם, מתוך מטרה לאתגר את עצמי וללמוד כלים חדשים ומתקדמים לניהול קונפיגורציות. כל שינוי שבוצע ב-Repository תורגם אוטומטית למצב הרצוי בקלאסטר על ידי מנגנון ה-Reconciliation של ArgoCD.
 
----
+2. מבנה ה-Repository
+ה-Repo תוכנן לפי עקרונות ה-Kustomize, המאפשרים הפרדה בין בסיס הקוד (Base) לבין התאמות לסביבות (Overlays):
 
-## 1. הסבר על הפתרון
+apps/whoami/base: מכיל את המניפסטים הבסיסיים המשותפים לכל הסביבות.
+apps/whoami/environments: מכיל הגדרות ספציפיות לכל סביבה (פיתוח/ייצור).
+argocd: מכיל את קבצי ה-Application המגדירים ל-ArgoCD מה לסנכרן.
 
-הפתרון מבוסס על ניהול דקלרטיבי של אפליקציית **whoami**.  
-תהליך העבודה כלל הקמת קלאסטר Kubernetes מקומי באמצעות Kind (על גבי מנוע Podman), הגדרת ArgoCD כקונטרולר לסנכרון, ופריסת האפליקציה תוך שימוש במבנה של Base ו-Overlays (Kustomize).
+למה בחרנו במבנה זה? כדי לאפשר גמישות (DRY - Don't Repeat Yourself). שינוי בבסיס משפיע על כל הסביבות, בעוד ששינויים ב-Overlays מאפשרים קונפיגורציה ייחודית ללא כפילות קוד.
 
-כל שינוי שבוצע ב-Repository תורגם אוטומטית למצב הרצוי בקלאסטר על ידי מנגנון ה-Reconciliation של ArgoCD.
+3. תהליך הפריסה
+נבחרה שיטת ה-GitOps כיוון שהיא מבטיחה שקיפות מוחלטת (מה שכתוב בגיט הוא מה שרץ בפועל) ומאפשרת שחזור מהיר (Rollback) ע"י חזרה לקומיט קודם. תהליך הפריסה מבוסס על "דחיפת" שינויים ל-Repo, זיהוי אוטומטי על ידי ArgoCD, והחלתם על הקלאסטר ללא התערבות ידנית ב-kubectl.
 
----
+4. החלטות תכנוניות מרכזיות
+שימוש ב-Podman במקום Docker כדי להבטיח תאימות סביבתית, וניהול גרסאות עם Image Tags קשיחים (לא Latest) כדי להבטיח יציבות בסביבות שונות.
 
-## 2. מבנה ה-Repository
+5. תהליך הלמידה
+הלמידה הייתה תהליך הדרגתי ומעשי שהתבסס על קריאת תיעוד רשמי של ArgoCD ו-Kind, התמודדות עם שגיאות רשת ו-Runtime, ושימוש ב-AI כשותף להבנת מושגי DevOps מורכבים בזמן אמת.
 
-ה-Repo תוכנן לפי עקרונות Kustomize, המאפשרים הפרדה בין בסיס הקוד (Base) לבין התאמות לסביבות (Overlays):
+6. כיצד ניגשתי ללמידה?
+ניגשתי ללמידה כ-"Problem-Solving Journey". התמקדתי בפתרון שגיאות ספציפיות דרך פירוק פקודות מורכבות (כמו kubectl port-forward) בעזרת AI, במקום ללמוד את כל התיעוד מאפס.
 
-- `apps/whoami/base`  
-  מכיל את המניפסטים הבסיסיים המשותפים לכל הסביבות.
+7. אתגרים טכנולוגיים והתמודדות
+במהלך הקמת סביבת ה-GitOps ופריסת האפליקציה whoami, נתקלתי במספר אתגרים:
 
-- `apps/whoami/environments`  
-  מכיל הגדרות ספציפיות לכל סביבה (פיתוח/ייצור).
+בעיות רשת: ה-Pods נכנסו למצב ImagePullBackOff כי הקלאסטר היה מנותק מהאינטרנט. הפתרון היה מעבר לעבודה Offline עם טעינת Images ידנית.
 
-- `argocd`  
-  מכיל את קבצי ה-Application המגדירים ל-ArgoCD מה לסנכרן.
+מגבלות kind load: נתקלתי בבעיות תאימות בין Kind ל-Podman. הפתרון היה עבודה ישירה מול ה-Container Runtime של Kubernetes.
 
-**למה בחרנו במבנה זה?**  
-כדי לאפשר גמישות (DRY - Don't Repeat Yourself).  
-שינוי בבסיס משפיע על כל הסביבות, בעוד ששינויים ב-Overlays מאפשרים קונפיגורציה ייחודית ללא כפילות קוד.
+קפיאת Podman Machine: קריסת ה-Control Plane דרשה הפעלה מחדש של ה-Container וחיבור מחדש של ה-API Server.
 
----
+התאמת שמות Images: ייבוא ידני יצר שמות כגון localhost/..., מה שחייב עדכון ידני ב-Deployment.
 
-## 3. תהליך הפריסה
+8. דוגמאות לפורמטים (Prompts) לשימוש ב-AI
+השאלות שסייעו לי לפצח את האתגרים כללו את:
+ArgoCD shows 'OutOfSync', how do I debug the generated manifest?
+I am getting ImagePullBackOff, how do I check if my container runtime in Kind can see my local images?
+How can I import a .tar file directly into Kind's containerd runtime?
 
-נבחרה שיטת GitOps כיוון שהיא מבטיחה שקיפות מוחלטת (מה שכתוב בגיט הוא מה שרץ בפועל) ומאפשרת שחזור מהיר (Rollback) על ידי חזרה לקומיט קודם.
+9. שיפורים עתידיים
+Auto-Scaling: הוספת HPA להתאמת מספר הפודים לעומס.
+CI/CD Pipeline: שילוב תהליך אוטומטי לבניית אימג'ים (GitHub Actions).
 
-תהליך הפריסה מבוסס על:
-- "דחיפת" שינויים ל-Repo
-- זיהוי אוטומטי על ידי ArgoCD
-- החלת השינויים על הקלאסטר ללא התערבות ידנית ב-`kubectl`
+10. סביבת Production
+בסביבת Prod הייתי משנה: שימוש ב-Private Container Registry מאובטח והוספת ניטור (Prometheus ו-Grafana).
 
----
-
-## 4. החלטות תכנוניות מרכזיות
-
-- שימוש ב-Podman במקום Docker כדי להבטיח תאימות סביבתית
-- ניהול גרסאות עם Image Tags קשיחים (ולא `latest`) כדי להבטיח יציבות בסביבות שונות
-
----
-
-## 5. תהליך הלמידה
-
-הלמידה הייתה תהליך הדרגתי ומעשי שהתבסס על:
-- קריאת תיעוד רשמי של ArgoCD ו-Kind
-- התמודדות עם שגיאות רשת ו-Runtime
-- שימוש ב-AI כשותף להבנת מושגי DevOps מורכבים בזמן אמת
-
----
-
-## 6. כיצד ניגשתי ללמידה?
-
-ניגשתי ללמידה כ-"Problem-Solving Journey".  
-התמקדתי בפתרון שגיאות ספציפיות דרך פירוק פקודות מורכבות (כמו `kubectl port-forward`) בעזרת AI, במקום ללמוד את כל התיעוד מאפס.
-
----
-
-## 7. אתגרים טכנולוגיים והתמודדות
-
-במהלך הקמת סביבת ה-GitOps ופריסת האפליקציה **whoami**, נתקלתי במספר אתגרים:
-
-- **בעיות רשת**  
-  ה-Pods נכנסו למצב `ImagePullBackOff` כי הקלאסטר היה מנותק מהאינטרנט.  
-  הפתרון היה מעבר לעבודה Offline עם טעינת Images ידנית.
-
-- **מגבלות kind load**  
-  בעיות תאימות בין Kind ל-Podman.  
-  הפתרון היה עבודה ישירה מול ה-Container Runtime של Kubernetes.
-
-- **קפיאת Podman Machine**  
-  קריסת ה-Control Plane דרשה הפעלה מחדש של ה-Container וחיבור מחדש של ה-API Server.
-
-- **התאמת שמות Images**  
-  ייבוא ידני יצר שמות כגון `localhost/...`, מה שחייב עדכון ידני ב-Deployment.
-
----
-
-## 8. דוגמאות לפורמטים (Prompts) לשימוש ב-AI
-
-השאלות שסייעו לפצח את האתגרים כללו:
-
-- ArgoCD shows 'OutOfSync', how do I debug the generated manifest?
-- I am getting ImagePullBackOff, how do I check if my container runtime in Kind can see my local images?
-- How can I import a .tar file directly into Kind's containerd runtime?
-
----
-
-## 9. שיפורים עתידיים
-
-- Auto-Scaling: הוספת HPA להתאמת מספר הפודים לעומס
-- CI/CD Pipeline: שילוב תהליך אוטומטי לבניית אימג'ים (GitHub Actions)
-
----
-
-## 10. סביבת Production
-
-בסביבת Production הייתי משנה:
-- שימוש ב-Private Container Registry מאובטח
-- הוספת ניטור (Prometheus ו-Grafana)
-
----
-
-## 11. סיכונים בפתרון הנוכחי
-
-- **Single Point of Failure**  
-  תלות ב-Podman Machine המקומית
-
-- **חוסר אבטחה**  
-  ניהול אימג'ים ידני ללא סריקת פגיעות
+11. סיכונים בפתרון הנוכחי
+Single Point of Failure: תלות ב-Podman Machine המקומית.
+חוסר אבטחה: ניהול אימג'ים ידני ללא סריקת פגיעות.
