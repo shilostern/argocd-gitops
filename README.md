@@ -5,7 +5,7 @@ This project demonstrates the implementation of GitOps methodology in a local en
 ---
 
 ## 1. Project Overview
-The solution is based on the declarative management of the `whoami` application. The workflow included setting up a local Kubernetes cluster using Kind (on the Podman engine) and configuring ArgoCD as a synchronization controller. I chose to implement the **Kustomize** deployment method—despite having no prior experience with it—to challenge myself and master new, advanced configuration management tools. Every change committed to this repository is automatically reconciled to the desired state in the cluster by ArgoCD.
+The solution is based on the declarative management of the `whoami` application. The workflow included setting up a local Kubernetes cluster using Kind (on the Podman engine) and configuring ArgoCD as a synchronization controller. I chose to implement the **Kustomize** deployment method to challenge myself and master new, advanced configuration management tools, as it was a methodology I hadn't used before. Every change committed to this repository is automatically reconciled to the desired state in the cluster by ArgoCD.
 
 ## 2. Repository Structure
 The repository is designed using Kustomize principles, allowing for a clear separation between the base code and environment-specific adjustments (Overlays):
@@ -21,7 +21,7 @@ GitOps was chosen for its total transparency (what is in Git is what runs in the
 
 ## 4. Key Design Decisions
 * **Podman over Docker:** Chosen for environment compatibility, which required specific adjustments to the container runtime.
-* **Hardcoded Image Tags:** Using specific versions instead of `latest` to ensure stability across different environments.
+* **Image Tagging:** Currently utilizing the `latest` tag for the application images to facilitate continuous updates and testing.
 
 ## 5. The Learning Process
 The learning path was gradual and hands-on, based on reading official ArgoCD and Kind documentation, troubleshooting network and runtime errors, and using AI as a partner to understand complex DevOps concepts in real-time.
