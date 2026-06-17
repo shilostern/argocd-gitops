@@ -56,7 +56,7 @@
 ## 5. תהליך הלמידה
 
 הלמידה הייתה תהליך הדרגתי ומעשי שהתבסס על:
-- קריאת תיעוד רשמי של ArgoCD ו-Kind
+- קריאת תיעוד רשמי של ArgoCD ,Kustomize ו-Kind
 - התמודדות עם שגיאות רשת ו-Runtime
 - שימוש ב-AI כשותף להבנת מושגי DevOps מורכבים בזמן אמת
 
@@ -77,10 +77,6 @@
   ה-Pods נכנסו למצב `ImagePullBackOff` כי הקלאסטר היה מנותק מהאינטרנט.  
   הפתרון היה מעבר לעבודה Offline עם טעינת Images ידנית.
 
-- **מגבלות kind load**  
-  בעיות תאימות בין Kind ל-Podman.  
-  הפתרון היה עבודה ישירה מול ה-Container Runtime של Kubernetes.
-
 - **קפיאת Podman Machine**  
   קריסת ה-Control Plane דרשה הפעלה מחדש של ה-Container וחיבור מחדש של ה-API Server.
 
@@ -100,9 +96,7 @@
 ---
 
 ## 9. שיפורים עתידיים
-
-- Auto-Scaling: הוספת HPA להתאמת מספר הפודים לעומס
-- CI/CD Pipeline: שילוב תהליך אוטומטי לבניית אימג'ים (GitHub Actions)
+                                                                                                                                                                                  Auto-Scaling: הוספת HPA להתאמת מספר הפודים לעומס                                                                                                                                                                    CI/CD Pipeline: שילוב תהליך אוטומטי לבניית אימג'ים (GitHub Actions)
 
 ---
 
@@ -115,9 +109,8 @@
 ---
 
 ## 11. סיכונים בפתרון הנוכחי
-
-- **Single Point of Failure**  
+                                                                                                                                                                                                **Single Point of Failure**  
   תלות ב-Podman Machine המקומית
 
-- **חוסר אבטחה**  
+**חוסר אבטחה**  
   ניהול אימג'ים ידני ללא סריקת פגיעויות
