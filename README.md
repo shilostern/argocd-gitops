@@ -33,5 +33,6 @@ The project follows a modular layout designed for high extensibility and strict 
 1. Local Infrastructure Setup
 The infrastructure is instantiated on Windows utilizing Podman as the container engine backend for Kind:
 
+PowerShell
 $env:KIND_EXPERIMENTAL_PROVIDER="podman"
 kind create cluster --name gitops-cluster
