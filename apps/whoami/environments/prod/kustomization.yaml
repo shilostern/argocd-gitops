@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Inherit baseline resources
+resources:
+  - ../../base
+
+# Load modular components
+components:
+  - ../../components/environment-variables
+
+# Prod-specific overrides and environment variables
+patches:
+  - target:
+      kind: Deployment
+      name: whoami
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: "production"
+
+# High availability setup for production workloads
+replicas:
+  - name: whoami
+    count: 3
+
+# Resource isolation and naming strategy
+namespace: whoami-prod
+nameSuffix: -prod
