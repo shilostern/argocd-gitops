@@ -28,3 +28,10 @@ The project follows a modular layout designed for high extensibility and strict 
 │   ├── dev-app.yaml
 │   └── prod-app.yaml
 └── README.md
+
+🚀 Deployment & Synchronization Process
+1. Local Infrastructure Setup
+The infrastructure is instantiated on Windows utilizing Podman as the container engine backend for Kind:
+
+$env:KIND_EXPERIMENTAL_PROVIDER="podman"
+kind create cluster --name gitops-cluster
