@@ -10,10 +10,7 @@
 הפתרון מבוסס על ניהול דקלרטיבי של אפליקציית whoami. תהליך העבודה כלל הקמת קלאסטר Kubernetes מקומי באמצעות Kind (על גבי מנוע Podman), הגדרת ArgoCD כקונטרולר לסנכרון, ופריסת האפליקציה תוך שימוש במבנה של Base ו-Overlays (Kustomize). כל שינוי שבוצע ב-Repository תורגם אוטומטית למצב הרצוי בקלאסטר על ידי מנגנון ה-Reconciliation של ArgoCD.
 
 ## 2. מבנה ה-Repository
-ה-Repo תוכנן לפי עקרונות ה-Kustomize, המאפשרים הפרדה בין בסיס הקוד (Base) לבין התאמות לסביבות (Overlays):
-* **apps/whoami/base:** מכיל את המניפסטים הבסיסיים (Deployment, Service) המשותפים לכל הסביבות.
-* **apps/whoami/environments:** מכיל הגדרות ספציפיות לכל סביבה (פיתוח/ייצור).
-* **argocd:** מכיל את קבצי ה-Application המגדירים ל-ArgoCD מה לסנכרן ומאיפה.
+ה-Repo תוכנן לפי עקרונות ה-Kustomize, המאפשרים הפרדה בין בסיס הקוד (Base) לבין התאמות לסביבות (Overlays):                                                                                                                                   * **apps/whoami/base:** מכיל את המניפסטים הבסיסיים (Deployment, Service) המשותפים לכל הסביבות.                                                                                                                                        * **apps/whoami/environments:** מכיל הגדרות ספציפיות לכל סביבה (פיתוח/ייצור).                                                                                                                                                         * **argocd:** מכיל את קבצי ה-Application המגדירים ל-ArgoCD מה לסנכרן ומאיפה.
 למה בחרנו במבנה זה? כדי לאפשר גמישות (DRY - Don't Repeat Yourself). שינוי בבסיס משפיע על כל הסביבות, בעוד ששינויים ב-Overlays מאפשרים קונפיגורציה ייחודית (כמו כמות Replicas) ללא כפילות קוד.
 
 ## 3. תהליך הפריסה
@@ -59,17 +56,13 @@
 * "Explain the Kustomize directory structure—why can't I just use a single deployment.yaml?"
 * "How can I import a .tar file directly into Kind's containerd runtime when the cluster has no internet access?"
 
-## 9. שיפורים עתידיים
-* **Auto-Scaling:** הוספת HPA כדי שהמערכת תתאים את מספר הפודים לעומס בזמן אמת.
-* **CI/CD Pipeline:** שילוב תהליך אוטומטי שבונה אימג'ים (GitHub Actions) ומעדכן את ה-Repo אוטומטית.
+## 9. שיפורים עתידיים                                                                                                                                                                                                           * **Auto-Scaling:** הוספת HPA כדי שהמערכת תתאים את מספר הפודים לעומס בזמן אמת.                                                                                                                                                     * **CI/CD Pipeline:** שילוב תהליך אוטומטי שבונה אימג'ים (GitHub Actions) ומעדכן את ה-Repo אוטומטית.
 
 ## 10. סביבת Production
-בסביבת Prod הייתי משנה:
-* **Registry חיצוני:** שימוש ב-Private Container Registry מאובטח.
+בסביבת Prod הייתי משנה:                                                                                                                                                                                                          * **Registry חיצוני:** שימוש ב-Private Container Registry מאובטח.
 * **ניטור (Monitoring):** הוספת Prometheus ו-Grafana לניטור תקינות הפודים.
 
-## 11. סיכונים בפתרון הנוכחי
-* **Single Point of Failure:** תלות ב-Podman Machine המקומית; קריסתה משביתה את הקלאסטר.
+## 11. סיכונים בפתרון הנוכחי                                                                                                                                                                                                      * **Single Point of Failure:** תלות ב-Podman Machine המקומית; קריסתה משביתה את הקלאסטר.
 * **חוסר אבטחה:** ניהול האימג'ים באופן ידני ללא סריקת פגיעות.
 
 </div>
