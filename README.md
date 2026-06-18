@@ -56,4 +56,13 @@ In a production scenario, I would implement:
 * **Single Point of Failure:** Dependency on the local Podman Machine; its failure shuts down the cluster.
 * **Security Gaps:** Manual image management lacks automated vulnerability scanning.
 
+## 12. Scaling to 20 Clusters
+Scaling from 2 to 20 clusters requires transitioning to a fleet-management approach:
+
+ArgoCD ApplicationSets: I would implement ApplicationSets to automate application deployment across multiple clusters. This replaces manual application definitions with dynamic templates that automatically discover and provision resources on newly added clusters.
+
+Hierarchical Environment Management: Utilizing a structured Kustomize hierarchy, I would manage configurations across diverse regions and environments (e.g., dev, staging, prod). This allows for a common base configuration while using overlays to specify environment-specific parameters, such as unique resource limits for clusters in different geographic regions.
+
+Centralized RBAC: To maintain security across 20 clusters, I would implement centralized Role-Based Access Control (RBAC). Access would be managed via group-based policies—such as granting Developers read-only access, Integrators sync permissions in staging environments, and Cluster-Admins full administrative control—ensuring consistent permission enforcement across the entire cluster fleet.
+
 ---
