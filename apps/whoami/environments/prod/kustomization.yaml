@@ -18,7 +18,7 @@ patchesStrategicMerge:
           containers:
             - name: whoami
               env:
-                - name: ENV_NAME  # שנה לשם המשתנה המדויק שהאפליקציה שלך מצפה לו
+                - name: ENV_NAME
                   value: "production"
 
 # High availability setup for production workloads
