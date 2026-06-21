@@ -24,7 +24,7 @@ patchesStrategicMerge:
 # High availability setup for production workloads
 replicas:
   - name: whoami
-    count: 9
+    count: 25
 
 # Resource isolation and naming strategy
 namespace: whoami-prod
