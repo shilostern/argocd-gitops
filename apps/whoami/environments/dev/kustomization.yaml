@@ -24,7 +24,7 @@ patchesStrategicMerge:
 # Scaled down replica count for development environment stability
 replicas:
   - name: whoami
-    count: 2
+    count: 10
 
 # Resource isolation and naming strategy
 namespace: whoami-dev
